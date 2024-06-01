@@ -78,4 +78,9 @@ module.exports = class ChatBot {
             for (let channel in serviceInstance.channels || chatService.channels)
                 channel.send(msg);
     }
+
+    shutdownGracefully = () => {
+        //TODO: save/export state
+        process.exit();
+    }
 }
