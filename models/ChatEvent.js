@@ -25,4 +25,23 @@ module.exports = class ChatEvent extends Event {
 
         return this.metadata?.[extNamespace]?.set?.(key, value);
     }
+
+    static onceFilter = (eventEmitter, eventName, filterFunc, cb) => {
+
+        const promiseExec = (resolve, reject) => {
+
+            const processEvent = (...args) => {
+
+                if (filterFunc(...args)) {
+
+                    eventEmitter.removeListener(eventName, processEvent);
+                    resolve(...args);
+                }
+            };
+
+            return eventEmitter.on(eventName, processEvent);
+        };
+
+        return cb === 'function' ? promiseExec(cb) : new Promise(promiseExec);
+    }
 }
