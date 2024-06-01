@@ -1,3 +1,5 @@
+const { setMetaData, getMetaData } = require('../services/state/metaDataMaps');
+
 module.exports = class ChatEvent extends Event {
 
     constructor(...args) {
@@ -7,24 +9,9 @@ module.exports = class ChatEvent extends Event {
         super(...args);
     }
 
-    setMetaData = (extNamespace, key, value) => {
+    setMetaData = setMetaData.bind(this);
 
-        if (!extNamespace || !key) return;
-
-        if (!this.metadata) this.metadata = {};
-
-        if (!this.metadata[extNamespace])
-            this.metadata[extNamespace] = new Map();
-
-        this.metadata[extNamespace].set(key, value);
-    }
-
-    getMetaData = (extNamespace, key) => {
-
-        if (!extNamespace || !key) return;
-
-        return this.metadata?.[extNamespace]?.set?.(key, value);
-    }
+    getMetaData = getMetaData.bind(this);
 
     static onceFilter = (eventEmitter, eventName, filterFunc, cb) => {
 

@@ -1,20 +1,11 @@
-module.exports = class ChatService {
-    constructor(opts) {
-        const exampleOpts = {
-            user: "someUser",
-            pass: "somePass",
-            token: "xxxxxxxxxx",
-            services: {
-                "discord": {
-                    intents: [
+const { EventEmitter } = require('events');
+const ChatEvent = require('./ChatEvent');
+const { setMetaData, getMetaData } = require('../services/state/metaDataMaps');
 
-                    ]
-                },
-                "irc": {
-                    //...
-                }
-            }
-        };
+module.exports = class ChatService extends EventEmitter {
+
+    constructor(opts) {
+
     }
 
     login = () => {
@@ -25,7 +16,7 @@ module.exports = class ChatService {
 
     }
 
-    join = () => {
+    join = (channel) => {
 
     }
 
@@ -37,16 +28,39 @@ module.exports = class ChatService {
 
     }
     
-    privateMsg = () => {
+    sendMsg = (channel, msg) => {};
+
+    sendPrivMsg = (user, privMsg) => {
 
     }
 
-    selfMetaData = () => {
+    send = (msgObj) => {
 
     }
+
+    setMetaData = setMetaData.bind(this);
+
+    getMetaData = getMetaData.bind(this);
+
+    onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
 
     //TODO: caches
-    //TODO:   users
-    //TODO:   channels
-
+    //TODO:   - users
+    //TODO:   - channels
 }
+
+const exampleOpts = {
+    user: "someUser",
+    pass: "somePass",
+    token: "xxxxxxxxxx",
+    services: {
+        "discord": {
+            intents: [
+
+            ]
+        },
+        "irc": {
+            //...
+        }
+    }
+};
