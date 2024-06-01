@@ -1,15 +1,15 @@
+/*
 
-    /*
+    - [x] login
+    - [x] event registration
+        - [x] feed w. every event type
+    - [ ] msg decorators (for chat service-specific styling features)
 
-        - [x] login
-        - [ ] event registration
-            - [x] feed w. every event type
-        - [ ] msg decorators (for chat service-specific styling features)
-
-    */
+*/
 
 import ChatService from '../../models/ChatService';
-import { Events, SlashCommandBuilder, GatewayIntentBits } from "discord.js";
+import logger from '../../../utilities/logger';
+import { BaseChannel, Events, SlashCommandBuilder, GatewayIntentBits } from "discord.js";
 
 module.exports = class DiscordCore extends ChatService {
 
@@ -17,34 +17,69 @@ module.exports = class DiscordCore extends ChatService {
 
         this.options = opts;
         this.client = new Client(opts);
+        this.currentChannelHandler = null;
     }
 
-    //TODO: multiple mapped instances
+    login = (otherToken) => this.client.login(otherToken || this.options?.token || '');
 
-    login = (betterToken) => this.client.login(betterToken || this.options?.token || '');
+    logout = () => this.client.destroy();
 
-    logout = () => {
+    join = (channeldOrIdOrName, cb) => {
 
+        //TODO: should this return a Channel? Should Channel be an EventEmitter?
+
+        let eventHandlerWrapper;
+
+        if (channeldOrIdOrName instanceof BaseChannel) {
+
+            eventHandlerWrapper = (msg, ...args) => {
+                if (msg.channel.name === channeldOrIdOrName.name)
+                    cb(msg, ...args);
+            };
+
+        } else if (typeof channeldOrIdOrName === 'number' || !isNaN(Number(channeldOrIdOrName))) {
+
+            eventHandlerWrapper = (msg, ...args) => {
+                if (msg.channel.id === channeldOrIdOrName)
+                    cb(msg, ...args);
+            };
+
+        } else if (typeof channeldOrIdOrName === 'string' && channeldOrIdOrName.length) {
+
+            const namedChannel = this.client.channels.find((chan) => chan.name === channeldOrIdOrName && chan.type === 'text');
+
+            if (namedChannel) {
+                eventHandlerWrapper = (msg, ...args) => {
+                    if (msg.channel.name === namedChannel.name)
+                        cb(msg, ...args);
+                };
+            } else {
+                throw new Error();
+            }
+        }
+
+        this.currentChannelHandler = eventHandlerWrapper;
+
+        return new Promise((s,r) => s(this.client.on(Events.MessageCreate, eventHandlerWrapper)));
     }
 
-    join = () => {
+    leave = () => new Promise((s,r) => s(this.client.removeListener(Events.MessageCreate, this.currentChannelHandler)));
 
-    }
-
-    leave = () => {
-
-    }
-
-    listChannels = () => {
-
-    }
+    listChannels = () => this.client.channels.fetch().catch( logger.error );
     
-    privateMsg = () => {
-
+    sendMsg = (channel, dm) => {
+        return channel.send(dm)
+            .then( evt => logger.log(`Sent message successfully: ${evt}`) )
+            .finally( () => {} )
+            .catch( logger.error );
     }
 
-    selfMetaData = () => {
-
+    sendPrivMsg = (userToDM, text) => {
+        return userToDM.createDM()
+            .then( usrDMC => usrDMC.send(text) )
+            .then( evt => logger.log(`Sent message successfully: ${evt}`) )
+            .finally( () => {} )
+            .catch( logger.error );
     }
 
     getWaterhoseFeed = (eventProcessor, events = Object.values(Events)) => {
@@ -54,16 +89,6 @@ module.exports = class DiscordCore extends ChatService {
 
 
     /******************************************************************* */
-
-    static waitForEvent = (client, event, onlyOnce) => {
-        //TODO: self-cleaning listeners even if more than once
-        return new Promise((resolve, reject) => {
-            client.once(Events.Error, (err) => reject(err));
-            client[onlyOnce ? 'once' : 'on'](event, (...args) => {
-                resolve(args);
-            });
-        });
-    }
 
     static convertBotCmdToDiscordCmd = (botCmd) => {
         return new SlashCommandBuilder()
