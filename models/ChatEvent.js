@@ -29,6 +29,6 @@ module.exports = class ChatEvent extends Event {
             return eventEmitter.on(eventName, processEvent);
         };
 
-        return cb === 'function' ? promiseExec(cb) : new Promise(promiseExec);
+        return typeof cb === 'function' ? promiseExec(cb.bind(null, undefined)) : new Promise(promiseExec);
     }
 }
