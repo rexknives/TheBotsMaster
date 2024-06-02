@@ -5,7 +5,7 @@ const { setMetaData, getMetaData } = require('../services/state/metaDataMaps');
 module.exports = class ChatService extends EventEmitter {
 
     constructor(opts) {
-
+        super(opts);
     }
 
     login = () => {

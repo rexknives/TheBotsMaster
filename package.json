@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "scrap": "node scrap.js"
+  },
   "dependencies": {
     "@discordjs/voice": "^0.17.0",
     "@langchain/langgraph": "^0.0.21",

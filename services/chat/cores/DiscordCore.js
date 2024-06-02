@@ -1,19 +1,15 @@
-/*
+// TODO: msg decorators (for chat service-specific styling features)
 
-    - [x] login
-    - [x] event registration
-        - [x] feed w. every event type
-    - [ ] msg decorators (for chat service-specific styling features)
-
-*/
-
-import ChatService from '../../models/ChatService';
-import logger from '../../../utilities/logger';
-import { BaseChannel, Events, SlashCommandBuilder, GatewayIntentBits } from "discord.js";
+const ChatService = require('../../../models/ChatService');
+const ChatEvent = require('../../../models/ChatEvent');
+const logger = require('../../../utilities/logger');
+const { Client, BaseChannel, Events, SlashCommandBuilder } = require('discord.js');
 
 module.exports = class DiscordCore extends ChatService {
 
     constructor(opts) {
+
+        super(opts);
 
         this.options = opts;
         this.client = new Client(opts);
@@ -70,7 +66,6 @@ module.exports = class DiscordCore extends ChatService {
     sendMsg = (channel, dm) => {
         return channel.send(dm)
             .then( evt => logger.log(`Sent message successfully: ${evt}`) )
-            .finally( () => {} )
             .catch( logger.error );
     }
 
@@ -78,15 +73,21 @@ module.exports = class DiscordCore extends ChatService {
         return userToDM.createDM()
             .then( usrDMC => usrDMC.send(text) )
             .then( evt => logger.log(`Sent message successfully: ${evt}`) )
-            .finally( () => {} )
             .catch( logger.error );
     }
 
-    getWaterhoseFeed = (eventProcessor, events = Object.values(Events)) => {
-        for (ev in events)
-            this.client.on(ev, eventProcessor);
-    }
+    on = (...args) => this.client?.on(...args);
 
+    once = (...args) => this.client?.once(...args);
+
+    onceFilter = (...args) => ChatEvent.onceFilter(this.client, ...args);   //TODO: change to -this-
+
+    getWaterhoseFeed = (eventProcessor, disableFeed = false, events = Object.values(Events)) => {
+        events.forEach((evt)=>{
+            logger.debug(`adding ${evt} to waterhose event listener.`);
+            this.client[disableFeed ? 'removeListener' : 'on'](evt, eventProcessor);
+        });
+    }
 
     /******************************************************************* */
 
@@ -94,35 +95,5 @@ module.exports = class DiscordCore extends ChatService {
         return new SlashCommandBuilder()
             .setName(botCmd.name)
             .setDescription(botCmd.description);
-            //.addStringOption(option => 
-            //    option.setName('input')
-            //        .setDescription('The input to echo back'))
-            //        .setRequired(true)
-			//        .addChoices(
-            //            { name: 'Funny', value: 'gif_funny' },
-            //            { name: 'Meme', value: 'gif_meme' },
-            //            { name: 'Movie', value: 'gif_movie' },
-			//         )
-            //),
-	        //.addChannelOption(option => option.setName('channel').setDescription('The channel to echo into'));
-            //.addBooleanOption(option => option.setName('ephemeral').setDescription('Whether or not the echo should be ephemeral'));
-
-            /*
-            addAttachmentOption
-            addBooleanOption
-            addChannelOption
-            addIntegerOption
-            addMentionableOption
-            addNumberOption
-            addRoleOption
-            addStringOption
-            addSubcommand
-            addSubcommandGroup
-            addUserOption
-
-            setDefaultMemberPermissions(PermissionFlagsBits.BanMembers)
-		    setDMPermission(false),
-            setNSFW
-            */
     }
 }
