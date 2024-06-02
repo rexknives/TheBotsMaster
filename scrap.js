@@ -1,26 +1,44 @@
 const DISCORD_BOT_TOKEN = require('./config.js');
-const { Client, Events, GatewayIntentBits, Intents } = require('discord.js');
+const { Client, Events, GatewayIntentBits, Intents, TextChannel } = require('discord.js');
+const DiscordCore = require('./services/chat/cores/DiscordCore.js');
+const IRCCore = require('./services/chat/cores/IRCCore.js');
 
-const { genPreConf, promiseTest } = require('./middleware/preConfirmation');
+//const client = new DiscordCore({ intents: Object.values(GatewayIntentBits) });
 
-const path = require('path');
-const fs = require('fs');
+const client = new IRCCore('irc.libera.chat', 'SubwayBot', {
+    debug: true,
+    channels: ['#rexTestingStuff']
+});
 
-const client = new Client({ intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.DirectMessages,
-	GatewayIntentBits.GuildVoiceStates
-] });
+global.coreClient = client;
 
-client.on(Events.ClientReady, (client) => {
-    const myUser = client.users.fetch('721912593383686144')
-        .then((myUser) => {
-            console.log(myUser);
-            const middleWareMeth = promiseTest(client, myUser, {content: 'test content here do you wanna tho', channel_id: '1230593583963312148'});
-            //middleWareMeth({content: 'test content here do you wanna tho', channel_id: '1230593583963312148'});
-        });
-})
+client.on('motd', (...args) => console.log(...args));
 
-client.login(DISCORD_BOT_TOKEN);
+client.on('error', (...args) => console.log(...args));
+
+client.getWaterhoseFeed( (...args) => console.log(...args) );
+
+/*
+coreClient.on(Events.ClientReady, (client) => {
+    console.log(`Ready! Logged in as ${client.user.id}`);
+
+    client.channels.fetch('1230593583963312148')
+    .then(chan => { 
+        //console.log(chan);
+        //global.coreClient.sendMsg(chan, "testing DiscordCore.js method sendMsg")
+    });
+
+    client.users.fetch('721912593383686144')
+    .then(user => { 
+        //console.log(user);
+        global.coreClient.sendPrivMsg(user, "testing DiscordCore.js method sendPrivMsg")
+    });
+
+    //global.coreClient.join('1230593583963312148', (evt) => console.log(evt));
+    
+});
+
+global.coreClient.login(DISCORD_BOT_TOKEN);
+*/
+
+
