@@ -91,9 +91,11 @@ module.exports = class DiscordCore extends ChatService {
 
     /******************************************************************* */
 
-    static convertBotCmdToDiscordCmd = (botCmd) => {
+    static discordCmdFactory = (botMasterCmd) => {
         return new SlashCommandBuilder()
             .setName(botCmd.name)
             .setDescription(botCmd.description);
     }
+
+    static botMasterCmdFactory = (botCmd) => {}
 }

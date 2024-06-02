@@ -8,35 +8,21 @@ module.exports = class ChatService extends EventEmitter {
         super(opts);
     }
 
-    login = () => {
+    login = () => {}
 
-    }
+    logout = () => {}
 
-    logout = () => {
+    join = (channelOrName) => {}
 
-    }
+    leave = () => {}
 
-    join = (channel) => {
-
-    }
-
-    leave = () => {
-
-    }
-
-    listChannels = () => {
-
-    }
+    listChannels = () => {}
     
     sendMsg = (channel, msg) => {};
 
-    sendPrivMsg = (user, privMsg) => {
+    sendPrivMsg = (user, privMsg) => {}
 
-    }
-
-    send = (msgObj) => {
-
-    }
+    send = (msgObj) => {}
 
     setMetaData = setMetaData.bind(this);
 
@@ -47,6 +33,8 @@ module.exports = class ChatService extends EventEmitter {
     //TODO: caches
     //TODO:   - users
     //TODO:   - channels
+
+    static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
 }
 
 const exampleOpts = {

@@ -2,17 +2,13 @@ module.exports = class Channel {
 
     constructor() {
 
+        this.id = null;
+        this.name = '';
     }
     
-    leave = () => {
+    join = () => {}
 
-    }
+    leave = () => {}
 
-    getUsers = () => {
-        
-    }
-
-    static channelFactory = (discordJsChannel) => {
-
-    }
+    getUsers = () => {}
 }

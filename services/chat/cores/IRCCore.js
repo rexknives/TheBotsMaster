@@ -48,10 +48,10 @@ module.exports = class IRCCore extends ChatService {
     }
 
     static allEvents = () => [
-        'registered', 'notice', 'mode_is', '+mode', '-mode', 'nick', 'motd', 'action', 'ctcp',
-        'raw', 'kick', 'names', 'topic', 'channellist', 'channellist_start', 'channellist_item',
-        'whois', 'selfMessage', 'kill', 'message', 'pm', 'invite', 'quit', 'join', 'abort',
-        'connect', 'error', 'sasl_error', 'sasl_loggedin', 'sasl_loggedout', 'ping', 'pong',
-        'netError', 'part', 'isupport'
+        'registered', 'notice', 'mode_is', '+mode', '-mode', 'nick', 'motd', 'action',
+        'ctcp', 'raw', 'kick', 'names', 'topic', 'channellist', 'channellist_start',
+        'channellist_item', 'whois', 'selfMessage', 'kill', 'message', 'pm', 'invite',
+        'quit', 'join', 'abort', 'connect', 'error', 'sasl_error', 'sasl_loggedin',
+        'sasl_loggedout', 'ping', 'pong', 'netError', 'part', 'isupport'
     ];
 }
