@@ -12,7 +12,8 @@ Chat bot framework supporting numerous chat services and composition flexibility
 
 - [ ] API for voice chat
 - [ ] Assistant Server/API - turns bot into API
-- [ ] Normalize Role mgmt system
+- [ ] Normalize Role mgmt subsystem
+- [ ] Normalize Sharding subsystem & API
 - Chat Services
     - [ ] Signal
     - [ ] Telegram
