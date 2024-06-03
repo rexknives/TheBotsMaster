@@ -59,6 +59,8 @@ module.exports = class ChatBot {
         throw new Error('Ambiguity in retrieving Chat Service instance.');    
     }
 
+    sendAll = () => {} // takes in msg and uses object properties to route to correct (or multiple) chat services and types of actions
+
     talk = ( msg, chatServiceName, ...args /* subBotName, channels */ ) => {
 
         let channels = args[args.length - 1];

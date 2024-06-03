@@ -9,12 +9,18 @@ Chat bot framework supporting numerous chat services and composition flexibility
 - several "bots" (conceptually speaking), premade, tied together into one with very little code
 
 # Todo:
-
+- [ ] Events
+    - [ ] automatically set up msg and privMsg event listeners to dispatch "synthetic" Events
+    - [ ] give "synthetic" Events reply methods
+    - [ ] wire msgs into Middleware stack after event listeners
 - [ ] API for voice chat
 - [ ] Assistant Server/API - turns bot into API
 - [ ] Normalize Role mgmt subsystem
 - [ ] Normalize Sharding subsystem & API
-- Chat Services
+- [ ] caches
+    - [ ] users
+    - [ ] channels
+- [ ] Chat Services
     - [ ] Signal
     - [ ] Telegram
     - [ ] WhatsApp
@@ -24,10 +30,10 @@ Chat bot framework supporting numerous chat services and composition flexibility
     - [ ] Facebook Messenger
     - [ ] Youtube live
     - [ ] Google hangouts
-    - maybe
+    - [ ] maybe
         - [ ] SMS
         - [ ] WeChat
         - [ ] HipChat
         - [ ] Snapchat
-- future roadmap
+- [ ] future roadmap
     - [ ] Bot Sharding
