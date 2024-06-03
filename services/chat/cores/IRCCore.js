@@ -4,9 +4,9 @@ const ChatService = require('../../../models/ChatService');
 
 module.exports = class IRCCore extends ChatService {
 
-    constructor(...args) {
+    constructor(opts, ...args) {
         super(...args);
-        this.options = args;
+        this.options = opts;
         this.client = new irc.Client(...this.options);
     }
 
@@ -46,6 +46,12 @@ module.exports = class IRCCore extends ChatService {
             this.client[off ? 'removeListener' : 'on'](evt, eventProcessor);
         });
     }
+
+    /******************************************************************* */
+
+    static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
+    
+    static userFactory = (nativeAPIUser) => {}    // returns our wrapped User instance
 
     static allEvents = () => [
         'registered', 'notice', 'mode_is', '+mode', '-mode', 'nick', 'motd', 'action',

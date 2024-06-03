@@ -91,6 +91,10 @@ module.exports = class DiscordCore extends ChatService {
 
     /******************************************************************* */
 
+    static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
+    
+    static userFactory = (nativeAPIUser) => {}    // returns our wrapped User instance
+
     static discordCmdFactory = (botMasterCmd) => {
         return new SlashCommandBuilder()
             .setName(botCmd.name)

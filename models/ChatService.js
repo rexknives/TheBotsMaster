@@ -8,33 +8,55 @@ module.exports = class ChatService extends EventEmitter {
         super(opts);
     }
 
+    // Account management
+
     login = () => {}
 
     logout = () => {}
 
+    // Channels
+
     join = (channelOrName) => {}
 
-    leave = () => {}
+    leave = (channelOrName) => {}
 
     listChannels = () => {}
+
+    // Messages
     
-    sendMsg = (channel, msg) => {};
+    sendMsg = (channelOrName, msg) => {};
 
     sendPrivMsg = (user, privMsg) => {}
 
     send = (msgObj) => {}
 
+    // Voice
+
+    startVoiceCall = (userOrNumber, cb) => {}
+
+    sendVoiceResp = (userOrNumber, cb) => {}
+
+    receiveVoiceResp = (cb) => {}
+
+    // MetaData management
+
     setMetaData = setMetaData.bind(this);
 
     getMetaData = getMetaData.bind(this);
 
+    // Event management
+
+    on = (...args) => this.client?.on(...args);
+
+    once = (...args) => this.client?.once(...args);
+
     onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
 
-    //TODO: caches
-    //TODO:   - users
-    //TODO:   - channels
+    // Framework Factories
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
+    
+    static userFactory = (nativeAPIUser) => {}    // returns our wrapped User instance
 }
 
 const exampleOpts = {

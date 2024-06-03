@@ -1,4 +1,4 @@
-const DISCORD_BOT_TOKEN = require('./config.js');
+const { DISCORD_BOT_TOKEN } = require('./config.js');
 const { Client, Events, GatewayIntentBits, Intents } = require('discord.js');
 const path = require('path');
 const fs = require('fs');
