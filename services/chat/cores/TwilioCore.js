@@ -90,11 +90,15 @@ module.exports = class TwilioCore extends ChatService {
         .catch(logger.error);
     }
 
+    on = (...args) => this.client?.on(...args);
+
+    once = (...args) => this.client?.once(...args);
+
+    onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
+
     setMetaData = setMetaData.bind(this);
 
     getMetaData = getMetaData.bind(this);
-
-    onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
 
     /*********************************************************** */
 
