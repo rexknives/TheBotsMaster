@@ -1,5 +1,5 @@
 const irc = require('matrix-org-irc');
-const logger = require('../../../utilities/logger');
+const logger = require('../../../util/logger');
 const ChatService = require('../../../models/ChatService');
 
 module.exports = class IRCCore extends ChatService {

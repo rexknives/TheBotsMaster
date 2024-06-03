@@ -1,6 +1,6 @@
 const CallStateMap = require('../services/state/CallStateMap');
 const { Events, TextInputStyle } = require('discord.js');
-const logger = require('../utilities/logger');
+const logger = require('../util/logger');
 const _ = require('lodash');
 
 module.exports = ( debuggingUserId ) => {

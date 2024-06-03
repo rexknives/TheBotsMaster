@@ -2,7 +2,7 @@
 
 const ChatService = require('../../../models/ChatService');
 const ChatEvent = require('../../../models/ChatEvent');
-const logger = require('../../../utilities/logger');
+const logger = require('../../../util/logger');
 const { Client, BaseChannel, Events, SlashCommandBuilder } = require('discord.js');
 
 module.exports = class DiscordCore extends ChatService {

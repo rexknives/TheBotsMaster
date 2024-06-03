@@ -5,7 +5,7 @@ const ChatService = require('../../../models/ChatService');
 const Channel = require('../../../models/Channel');
 const User = require('../../../models/User');
 const Matchacho = require('matchacho');
-const logger = require('../../../utilities/logger');
+const logger = require('../../../util/logger');
 
 module.exports = class TwilioCore extends ChatService {
 
