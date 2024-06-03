@@ -89,6 +89,8 @@ module.exports = class DiscordCore extends ChatService {
         });
     }
 
+    resgisterCommands = (cmds) => {}
+
     /******************************************************************* */
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance

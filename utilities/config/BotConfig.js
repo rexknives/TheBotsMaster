@@ -25,6 +25,7 @@ const exampleOpts = {
     commandPunctuation: '!',
     logger: logger,
     chatServices: [
+
         //...
     ]
 };

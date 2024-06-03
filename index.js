@@ -12,9 +12,9 @@ const client = new Client({ intents: [
 ] });
 
 const parseJSFiles = (fPath) => 
-  fs.readdirSync(fPath)
-    .filter(f => f.endsWith('.js'))
-    .map(f => require(path.join(fPath, f)));
+    fs.readdirSync(fPath)
+        .filter(f => f.endsWith('.js'))
+        .map(f => require(path.join(fPath, f)));
 
 const regEvents = (events) => {
     for (ev of events)

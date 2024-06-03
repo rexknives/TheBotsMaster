@@ -3,7 +3,7 @@ const twilio = require('twilio');
 const ChatService = require('../../../models/ChatService');
 const logger = require('../../../utilities/logger');
 
-module.exports = class TelephonyCore extends ChatService {
+module.exports = class TwilioCore extends ChatService {
 
     constructor(opts, ...args) {
 
@@ -11,11 +11,15 @@ module.exports = class TelephonyCore extends ChatService {
         this.client = new twilio(opts.accountSid, opts.authToken, {logLevel: 'debug'});
     }
 
-    login = () => {
+    initialize = () => {
+        this.setupSMShandler();
+
         if (this.options.isVoice) {
             this.setupVoiceHTTPServer();
         }
     }
+
+    login = this.initialize;
 
     setupVoiceHTTPServer = () => {
         this.httpServer = express();
@@ -27,9 +31,7 @@ module.exports = class TelephonyCore extends ChatService {
         });
     }
 
-    registerEndpoint = (endpointURL, requestHandler, verb = 'get') => {
-        this.httpServer?.[verb]?.(endpointURL, requestHandler);
-    }
+    registerEndpoint = (url, reqHandler, verb = 'get') => this.httpServer?.[verb]?.(url, reqHandler);
 
     getAudioFilePlayEndpoint = (audioFileURL = 'https://www.example.com/audio-file.mp3') => {
         return (req, res) => {
@@ -46,14 +48,14 @@ module.exports = class TelephonyCore extends ChatService {
 
     leave = (channelOrName) => {}
 
-    listChannels = () => {}
+    listChannels = () => {} // multi-party SMS you've started or received
     
     sendMsg = (channelOrName, msg) => {};
 
-    sendPrivMsg = (toUserOrNumber, toUserOrNumber, privMsg, ) => {
+    sendPrivMsg = (toUserOrNumber, fromUserOrNumber, privMsg, ) => {
         return this.client.messages.create({
             body: privMsg,
-            from: toUserOrNumber,
+            from: fromUserOrNumber,
             to: toUserOrNumber
         })
         .then(logger.log)
@@ -62,17 +64,17 @@ module.exports = class TelephonyCore extends ChatService {
 
     setupSMShandler = () => {
         this.registerEndpoint('/sms', (req, res) => {
-            const twiml = new twilio.twiml.MessagingResponse();
-          
             // Process the incoming message
             const incomingMessage = req.body.Body;
-            logger.debug('Received message:', incomingMessage);
+            logger.debug(`[ received message: ${incomingMessage} ]`);
           
             // Respond with a confirmation message
+            const twiml = new twilio.twiml.MessagingResponse();
             twiml.message('Your message has been received.');
-          
             res.type('text/xml');
             res.send(twiml.toString());
+
+            //TODO: register privMsg handler and dispatch synthetic
         }, 'post');
     }
 

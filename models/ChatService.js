@@ -28,7 +28,7 @@ module.exports = class ChatService extends EventEmitter {
 
     sendPrivMsg = (user, privMsg) => {}
 
-    send = (msgObj) => {}
+    sendAll = (chatEvent) => {}
 
     // Voice
 
