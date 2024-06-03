@@ -1,6 +1,10 @@
 const express = require('express');
 const twilio = require('twilio');
+const { isEmpty } = require('lodash');
 const ChatService = require('../../../models/ChatService');
+const Channel = require('../../../models/Channel');
+const User = require('../../../models/User');
+const Matchacho = require('matchacho');
 const logger = require('../../../utilities/logger');
 
 module.exports = class TwilioCore extends ChatService {
@@ -44,13 +48,28 @@ module.exports = class TwilioCore extends ChatService {
 
     logout = () => {}
 
-    join = (channelOrName) => {}
+    _checkP = (arg) => Matchacho(arg)
+        .when(Channel,   arg)
+        .when(User,      new Channel({phoneUsers: [arg]}))
+        .when(Array,     new Channel({phoneUsers: arg}))
+        .when(isEmpty, new Error(''))
+        .default(Channel({phoneUsers: [arguments]}));
 
-    leave = (channelOrName) => {}
+    join = (channelOrUserArrayOrUsers) => {
+        const channel = _checkP(channelOrUserArrayOrUsers);
+        return channel;
+    }
+
+    leave = (channelOrUserArrayOrUsers) => {
+        const channel = _checkP(channelOrUserArrayOrUsers);
+        return channel;
+    }
 
     listChannels = () => {} // multi-party SMS you've started or received
     
-    sendMsg = (channelOrName, msg) => {};
+    sendMsg = (channelOrUserArrayOrUsers, msg) => {
+        const channel = _checkP(channelOrUserArrayOrUsers);
+    };
 
     sendPrivMsg = (toUserOrNumber, fromUserOrNumber, privMsg, ) => {
         return this.client.messages.create({
@@ -99,8 +118,6 @@ module.exports = class TwilioCore extends ChatService {
     setMetaData = setMetaData.bind(this);
 
     getMetaData = getMetaData.bind(this);
-
-    /*********************************************************** */
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     

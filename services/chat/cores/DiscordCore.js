@@ -82,16 +82,16 @@ module.exports = class DiscordCore extends ChatService {
 
     onceFilter = (...args) => ChatEvent.onceFilter(this.client, ...args);   //TODO: change to -this-
 
-    getWaterhoseFeed = (eventProcessor, disableFeed = false, events = Object.values(Events)) => {
+    getWaterhoseFeed = (eventProcessor, disableFeed = false, events = DiscordCore.listEvents()) => {
         events.forEach((evt)=>{
             logger.debug(`adding ${evt} to waterhose event listener.`);
             this.client[disableFeed ? 'removeListener' : 'on'](evt, eventProcessor);
         });
     }
 
-    resgisterCommands = (cmds) => {}
+    registerCommands = (cmds) => {}
 
-    /******************************************************************* */
+    static listEvents = Object.values(Events);
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     

@@ -52,6 +52,8 @@ module.exports = class ChatService extends EventEmitter {
 
     onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
 
+    static listEvents = () => {}
+
     // Framework Factories
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance

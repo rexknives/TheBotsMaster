@@ -40,20 +40,18 @@ module.exports = class IRCCore extends ChatService {
 
     onceFilter = (...args) => ChatEvent.onceFilter(this.client, ...args);
 
-    getWaterhoseFeed = (eventProcessor, off = false, events = IRCCore.allEvents()) => {
+    getWaterhoseFeed = (eventProcessor, off = false, events = IRCCore.listEvents()) => {
         events.forEach((evt)=>{
             logger.debug(`adding ${evt} to waterhose event listener.`);
             this.client[off ? 'removeListener' : 'on'](evt, eventProcessor);
         });
     }
 
-    /******************************************************************* */
-
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     
     static userFactory = (nativeAPIUser) => {}    // returns our wrapped User instance
 
-    static allEvents = () => [
+    static listEvents = () => [
         'registered', 'notice', 'mode_is', '+mode', '-mode', 'nick', 'motd', 'action',
         'ctcp', 'raw', 'kick', 'names', 'topic', 'channellist', 'channellist_start',
         'channellist_item', 'whois', 'selfMessage', 'kill', 'message', 'pm', 'invite',

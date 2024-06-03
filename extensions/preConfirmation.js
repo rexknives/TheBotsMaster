@@ -7,7 +7,7 @@ const genConfInst = (dc, approvalUser) => {
 
     return (inMsg, outMsg, next) => {
 
-        // TODO: convert to service agnostic version
+        // TODO: convert to service agnostic version, achieve cross-service confirmation
 
         const approvalText = 'Hello \n' +
             'The Bot would like approval to send the following message:' +
