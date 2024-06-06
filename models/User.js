@@ -1,7 +1,8 @@
 module.exports = class User {
 
-    constructor() {
+    constructor(opts) {
 
+        Object.assign(this, opts);
     }
 
     sendPriveMsg = () => {
@@ -11,5 +12,11 @@ module.exports = class User {
 
 const exampleOpts = {
     id: null,
-    username: ''
+    name: '',
+    username: '',
+    email: '',
+    phoneNumber: '',
+    time: null,
+    client: null,
+    rawClient: null
 }

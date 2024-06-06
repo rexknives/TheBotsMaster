@@ -2,22 +2,26 @@ const { setMetaData, getMetaData } = require('../services/state/metaDataMaps');
 
 module.exports = class ChatEvent extends Event {
 
-    constructor(...args) {
+    constructor(type, evtObj, client, rawClient, ...args) {
 
-        this.metadata = null;
+        super(type);
 
-        super(...args);
+        Object.assign(this, evtObj);
+
+        this.chatbotEventType = type;
+        this.client = client;
+        this.rawClient = rawClient;
     }
 
     reply = () => {}
 
-    getRawClient = () => {}
+    getRawClient = () => this.rawClient;
 
-    getClientCore = () => {}
+    getClient = () => this.client;
 
-    getRawEvent = () => {}
+    getRawEvent = () => this.rawEvent;
 
-    getEventType = () => {}
+    getEventType = () => this.type;
 
     setMetaData = setMetaData.bind(this);
 
@@ -33,7 +37,7 @@ module.exports = class ChatEvent extends Event {
 
                 if (filterFunc(...args)) {
 
-                    eventEmitter.removeListener(eventName, processEvent);
+                    eventEmitter?.removeListener?.(eventName, processEvent);
                     resolve(...args);
                 }
             };
@@ -43,15 +47,18 @@ module.exports = class ChatEvent extends Event {
 
         return typeof cb === 'function' ? promiseExec(cb) : new Promise(promiseExec);
     }
-}
 
-ChatEvent.events = {
-    ALL_EVENT: 'all',
-    LOGIN_EVENT: 'login',
-    LIST_CHANNELS: 'listChannels',
-    MSG_EVENT: 'msg',
-    PRIV_MSG_EVENT: 'privMsg',
-    JOIN_EVENT: 'join',
-    LEAVE_EVENT: 'leave',
-    REC_VOICECALL_EVENT: 'voiceCallRec'
+    static events = {
+        ALL_EVENT: 'all',       // for use in logic where Messages will be routed & sent based on properties instead of by ChatEvent name
+        LOGIN_EVENT: 'login',
+        MSG_EVENT: 'msg',
+        PRIV_MSG_EVENT: 'privMsg',
+        JOIN_EVENT: 'join',
+        LEAVE_EVENT: 'leave',
+        LIST_CHANNELS: 'listChannels',
+        REC_VOICECALL_EVENT: 'voiceCallRec',
+        MSG_RECEIPT_EVENT: 'msgReceipt',
+        SERVICE_EVENT: 'serviceEvent',
+        ERROR: 'chatbotError'
+    }
 }

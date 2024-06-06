@@ -1,12 +1,17 @@
 const { EventEmitter } = require('events');
 const ChatEvent = require('./ChatEvent');
 const { setMetaData, getMetaData } = require('../services/state/metaDataMaps');
+const DiscordCore = require('../services/chat/cores/DiscordCore');
 
 module.exports = class ChatService extends EventEmitter {
 
     constructor(opts) {
         super(opts);
     }
+
+    _initListeners = () => {}
+
+    _prepopulateData = () => {}
 
     // Account management
 
@@ -30,9 +35,13 @@ module.exports = class ChatService extends EventEmitter {
 
     sendAll = (chatEvent) => {}
 
+    // Moderation
+
+    kick = (isPermanent) => {}
+
     // Voice
 
-    startVoiceCall = (userOrNumber, cb) => {}
+    startVoiceCall = (userOrNumberOrChannel, cb) => {}
 
     sendVoiceResp = (userOrNumber, cb) => {}
 
@@ -46,11 +55,19 @@ module.exports = class ChatService extends EventEmitter {
 
     // Event management
 
-    on = (...args) => this.client?.on(...args);
+    e = (factoryFunc, eName, evtObj, args) => {
+        
+        const aChatEvent = factoryFunc(this, eName, evtObj, args);
+        this.emit(ChatEvent.events.ALL_EVENT, aChatEvent); // fine, now that ChatEvent type is set
+        this.emit(eName, aChatEvent);
+        return aChatEvent;
+    }
 
-    once = (...args) => this.client?.once(...args);
+    on = (...args) => this.client?.on?.(...args);
 
-    onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
+    once = (...args) => this.client?.once?.(...args);
+
+    onceFilter = (...args) => ChatEvent.onceFilter(this.client, ...args);
 
     static listEvents = () => {}
 
@@ -59,20 +76,18 @@ module.exports = class ChatService extends EventEmitter {
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     
     static userFactory = (nativeAPIUser) => {}    // returns our wrapped User instance
+
+    static eventFactory = (nativeAPIEvent) => {}
 }
 
 const exampleOpts = {
     user: "someUser",
     pass: "somePass",
     token: "xxxxxxxxxx",
-    services: {
-        "discord": {
-            intents: [
+    omniChannel: false,
+    serviceSpecific: {
+        intents: [
 
-            ]
-        },
-        "irc": {
-            //...
-        }
+        ]
     }
 };
