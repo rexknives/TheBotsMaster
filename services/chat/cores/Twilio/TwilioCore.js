@@ -85,15 +85,15 @@ module.exports = class TwilioCore extends ChatService {
         const channel = _checkP(channelOrUserArrayOrUsers);
     };
 
-    sendPrivMsg = (toUserOrNumber, fromUserOrNumber, privMsg, ) => {
-        return this.client.messages.create({
-            body: privMsg,
-            from: fromUserOrNumber,
-            to: toUserOrNumber
-        })
-        .then(logger.log)
-        .catch(logger.error);
-    }
+    sendPrivMsg = (wrappedToUser, msgText) =>
+        this.client.messages.create({
+            body: msgText,
+            from: this.options.phoneNumber,
+            to: wrappedToUser.phoneNumber 
+        }).then( (msgRes) => {
+            logger.log(`Sent private message successfully: ${msgRes.body}`);
+            return this.e(ChatEvent.events.PRIV_MSG_EVENT, msgRes);
+        } ).catch( logger.error );
 
     sendAll = (chatEvent) => {}
 
@@ -115,21 +115,16 @@ module.exports = class TwilioCore extends ChatService {
 
     send = (msgObj) => {}
 
-    startVoiceCall = (toUserOrNumber, fromUserOrNumber, apiUrl, cb) => {
-        return this.client.calls.create({
+    startVoiceCall = (toUserOrNumber, fromUserOrNumber, apiUrl, cb) =>
+        this.client.calls.create({
             to: toUserOrNumber,
             from: fromUserOrNumber,
             url: `${apiUrl}:${this.options.port}`
         })
         .then(logger.log)
         .catch(logger.error);
-    }
 
-    on = (...args) => this.client?.on(...args);
-
-    once = (...args) => this.client?.once(...args);
-
-    onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
+    e = this.e.bind(this, TwilioCore.eventFactory);
 
     setMetaData = setMetaData.bind(this);
 
@@ -137,14 +132,46 @@ module.exports = class TwilioCore extends ChatService {
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     
-    static userFactory = (phoneNumber) => {
+    static userFactory = (originClient, phoneNumber) => {
 
-        new User({phoneNumber});
+        // TODO: handle string case
+
+        return new User({
+            phoneNumber: '+' + phoneNumber,
+            id: '+' + phoneNumber,
+            username: '+' + phoneNumber,
+            client: originClient,
+            rawClient: originClient.client,
+        });
+    }
+
+    static eventFactory = (originClient, eName, evtObj = {}, args) => {
+
+        const msgEventFactory = (msg) => {
+            return {
+                author: TwilioCore.userFactory(originClient, evtObj.from), // TODO: is this sometimes 'to'?
+                content: msg.body,
+                channel: {},
+                rawMsg: msg
+            }
+        }
+
+        Object.assign( evtObj,
+            match( eName,
+                ChatEvent.events.MSG_EVENT,         msgEventFactory,
+                ChatEvent.events.PRIV_MSG_EVENT,    msgEventFactory,
+                msgEventFactory                     // default
+            )
+        );
+
+        if (evtObj.timestamp)
+            evtObj.time = new Date(evtObj.timestamp);
+
+        return new ChatEvent(eName, evtObj, originClient, originClient.client);
     }
 
     static updateWebhooks = (twClient, phoneSID, smsUrl, voiceUrl) =>
-        twClient
-            .incomingPhoneNumbers(phoneSID)
+        twClient.incomingPhoneNumbers(phoneSID)
             .update({voiceUrl, smsUrl})         // sms_fallback_url, voice_fallback_url
             .then((res) => logger.debug(`[ ${res.phoneNumber} webhook URL updated ]`))
             .catch(logger.error);

@@ -115,17 +115,16 @@ module.exports = class DiscordCore extends ChatService {
 
     listChannels = () => DiscordCore.listChannels(this);
 
-    sendMsg = (channel, msg) => {
-        return channel.send(msg)
+    sendMsg = (channel, msg) =>
+        channel.send(msg)
             .then( (evt) => {
                 logger.log(`Sent message successfully: ${evt}`);
                 return this.e(ChatEvent.events.MSG_EVENT, evt);
             } )
             .catch( logger.error );
-    }
 
-    sendPrivMsg = (userToDM, text) => {
-        return userToDM.createDM()
+    sendPrivMsg = (wrappedUser, text) => {
+        return wrappedUser.rawUser.createDM()
             .then( usrDMC => usrDMC.send(text) )
             .then( (evt) => {
                 logger.log(`Sent private message successfully: ${evt}`);
@@ -185,9 +184,10 @@ module.exports = class DiscordCore extends ChatService {
 
         const msgEventFactory = (msg) => {
             return {
-                author: new User({id: msg.author?.id}),
+                author: DiscordCore.userFactory(originClient, {id: msg.author?.id}),
                 channel: DiscordCore.channelFactory(originClient, {id: msg?.channel_id}),     //DMs are also "Channels"
                 rawUser: msg.author,
+                rawMsg: msg,
                 content: msg.content
             }
         }

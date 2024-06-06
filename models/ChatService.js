@@ -63,11 +63,21 @@ module.exports = class ChatService extends EventEmitter {
         return aChatEvent;
     }
 
-    on = (...args) => this.client?.on?.(...args);
+    on = (eventType, handlerFunc) => {
 
-    once = (...args) => this.client?.once?.(...args);
+        const events = eventType instanceof Array ? eventType : [eventType];
+        events.forEach((evt) => this.on?.(evt, handler));
+    }
 
-    onceFilter = (...args) => ChatEvent.onceFilter(this.client, ...args);
+    off = (eventType, handlerFunc) => {
+
+        const events = eventType instanceof Array ? eventType : [eventType];
+        events.forEach((evt) => this.removeListener?.(evt, handler));
+    }
+
+    once = (...args) => this.once?.(...args);
+
+    onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
 
     static listEvents = () => {}
 

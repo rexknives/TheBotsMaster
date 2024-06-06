@@ -18,4 +18,6 @@ module.exports = class Channel {
     leave = () => {}
 
     getUsers = () => {}
+
+    sendMsg = () => {}
 }

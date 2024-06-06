@@ -5,9 +5,12 @@ module.exports = class User {
         Object.assign(this, opts);
     }
 
-    sendPriveMsg = () => {
-        
-    }
+    sendPrivMsg = (msg) => this.client.sendPrivMsg(
+        this, typeof msg === 'string' ? {content: msg} : msg
+    );
+
+    privChannel = { sendMsg: this.sendPrivMsg }
+
 }
 
 const exampleOpts = {
