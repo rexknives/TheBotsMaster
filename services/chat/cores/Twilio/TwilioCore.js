@@ -1,10 +1,11 @@
 const express = require('express');
-const twilio = require('twilio');
+const Twilio = require('twilio');
 const { isEmpty } = require('lodash');
 const ChatService = require('../../../models/ChatService');
+const User = require('../../../models/User');
 const Channel = require('../../../models/Channel');
 const User = require('../../../models/User');
-const Matchacho = require('matchacho');
+const { match } = require('matchacho');
 const logger = require('../../../util/logger');
 
 module.exports = class TwilioCore extends ChatService {
@@ -12,34 +13,44 @@ module.exports = class TwilioCore extends ChatService {
     constructor(opts, ...args) {
 
         this.options = opts;
-        this.client = new twilio(opts.accountSid, opts.authToken, {logLevel: 'debug'});
+        this.client = new Twilio(opts.accountSid, opts.authToken, {logLevel: 'debug'});
     }
 
-    initialize = () => {
-        this.setupSMShandler();
+    _init = () => {
 
-        if (this.options.isVoice) {
-            this.setupVoiceHTTPServer();
+        // Can always send sMS without needing a server if you don't care about replies
+        if ( this.options.canReceiveSMS || this.options.canSpeak ) {
+            this.setupHTTPServer();
+        }
+
+        if ( this.options.canReceiveSMS || this.options.canSpeak ) {
+            this.registerEndpoint('/sms', this.getSMSEndpointHandler(), 'post');
+        }
+
+        if (this.options.canSpeak) {
+            this.registerEndpoint('/twiml', this.getAudioFilePlayEndpointHandler());
+            this.registerEndpoint('/incoming', this.getAudioFilePlayEndpointHandler(), 'post');
         }
     }
 
-    login = this.initialize;
+    login = this._init;
 
-    setupVoiceHTTPServer = () => {
+    setupHTTPServer = () => {
         this.httpServer = express();
         this.options.port = this.options.port || 3000;
-        this.registerEndpoint('/twiml', this.getAudioFilePlayEndpoint());
-        this.registerEndpoint('/incoming', this.getAudioFilePlayEndpoint(), 'post');
         this.httpServer.listen(this.options.port, () => {
-            console.log(`Server is listening on port ${port}`);
+            logger.debug(`Server is listening on port ${port}`);
+            //TwilioCore.updateWebhooks();
         });
+
+        return this.httpServer;
     }
 
     registerEndpoint = (url, reqHandler, verb = 'get') => this.httpServer?.[verb]?.(url, reqHandler);
 
-    getAudioFilePlayEndpoint = (audioFileURL = 'https://www.example.com/audio-file.mp3') => {
+    getAudioFilePlayEndpointHandler = (audioFileURL = 'https://www.example.com/audio-file.mp3') => {
         return (req, res) => {
-            const twiml = new twilio.twiml.VoiceResponse();
+            const twiml = new Twilio.twiml.VoiceResponse();
             twiml.play(audioFileURL);
             res.type('text/xml');
             res.send(twiml.toString());
@@ -48,14 +59,17 @@ module.exports = class TwilioCore extends ChatService {
 
     logout = () => {}
 
-    _checkP = (arg) => Matchacho(arg)
+    _checkP = (arg) => match(arg)
         .when(Channel,   arg)
         .when(User,      new Channel({phoneUsers: [arg]}))
         .when(Array,     new Channel({phoneUsers: arg}))
-        .when(isEmpty, new Error(''))
+        .when(isEmpty,   new Error(''))
         .default(Channel({phoneUsers: [arguments]}));
 
     join = (channelOrUserArrayOrUsers) => {
+
+        // https://www.twilio.com/docs/conversations/group-texting
+
         const channel = _checkP(channelOrUserArrayOrUsers);
         return channel;
     }
@@ -81,27 +95,29 @@ module.exports = class TwilioCore extends ChatService {
         .catch(logger.error);
     }
 
-    setupSMShandler = () => {
-        this.registerEndpoint('/sms', (req, res) => {
-            // Process the incoming message
+    sendAll = (chatEvent) => {}
+
+    getSMSEndpointHandler = () => {
+        return (req, res) => {
+
             const incomingMessage = req.body.Body;
             logger.debug(`[ received message: ${incomingMessage} ]`);
           
-            // Respond with a confirmation message
-            const twiml = new twilio.twiml.MessagingResponse();
+            const twiml = new Twilio.twiml.MessagingResponse();
             twiml.message('Your message has been received.');
+
             res.type('text/xml');
             res.send(twiml.toString());
 
             //TODO: register privMsg handler and dispatch synthetic
-        }, 'post');
+        };
     }
 
     send = (msgObj) => {}
 
     startVoiceCall = (toUserOrNumber, fromUserOrNumber, apiUrl, cb) => {
         return this.client.calls.create({
-            to: userOrNumber,
+            to: toUserOrNumber,
             from: fromUserOrNumber,
             url: `${apiUrl}:${this.options.port}`
         })
@@ -121,9 +137,20 @@ module.exports = class TwilioCore extends ChatService {
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     
-    static userFactory = (nativeAPIUser) => {}    // returns our wrapped User instance
+    static userFactory = (phoneNumber) => {
+
+        new User({phoneNumber});
+    }
+
+    static updateWebhooks = (twClient, phoneSID, smsUrl, voiceUrl) =>
+        twClient
+            .incomingPhoneNumbers(phoneSID)
+            .update({voiceUrl, smsUrl})         // sms_fallback_url, voice_fallback_url
+            .then((res) => logger.debug(`[ ${res.phoneNumber} webhook URL updated ]`))
+            .catch(logger.error);
 }
 
 const exampleOpts = {
-    isVoice: true
+    canSpeak: true,
+    canReceiveSMS: true
 }
