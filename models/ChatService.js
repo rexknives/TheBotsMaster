@@ -33,13 +33,17 @@ module.exports = class ChatService extends EventEmitter {
     
     sendMsg = (channelOrName, msg) => {};
 
+    editMsg = () => new Promise((s) => s());
+
+    deleteMsg = () => new Promise((s) => s());
+
     sendPrivMsg = (user, privMsg) => {}
 
     sendAll = (chatEvent) => {}                             // for dispatching an event to the ALL feed
 
     // Moderation
 
-    kick = (isPermanent) => {}                              // kick/ban in one step
+    kick = (user, time) => {}                              // kick/ban in one step
 
     // Voice
 
@@ -78,8 +82,6 @@ module.exports = class ChatService extends EventEmitter {
         const events = eventType instanceof Array ? eventType : [eventType];
         events.forEach((evt) => this.removeListener?.(evt, handler));
     }
-
-    once = (...args) => this.once?.(...args);
 
     onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);
 
