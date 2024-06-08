@@ -1,6 +1,6 @@
 // TODO: msg decorators (for chat service-specific styling features)
 
-const { Client, BaseChannel, Events, SlashCommandBuilder } = require('discord.js');
+const { Client, BaseChannel, Events, SlashCommandBuilder, Message } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { match } = require('matchacho');
@@ -16,13 +16,19 @@ module.exports = class DiscordCore extends ChatService {
 
         super(opts);
 
-        this.options = opts;
+        const defaultOpts = {
+            omniChannel: true
+        }
+
+        this.options = {...defaultOpts, ...opts};
         this.client = new Client(opts);
         this.currentChannelHandler = null;
         this.currentChannel = null;
+
+        this.bot = {name: 'testbot'};
     }
 
-    _initListeners = () => {
+    _initialize = () => {
 
         this.client.on(Events.MessageCreate, (msg, ...args) => {
 
@@ -182,17 +188,27 @@ module.exports = class DiscordCore extends ChatService {
 
     static eventFactory = (originClient, eName, evtObj = {}, args) => {
 
-        const msgEventFactory = (msg) => {
+        const msgEventFactory = () => {
             return {
-                author: DiscordCore.userFactory(originClient, {id: msg.author?.id}),
-                channel: DiscordCore.channelFactory(originClient, {id: msg?.channel_id}),     //DMs are also "Channels"
-                rawUser: msg.author,
-                rawMsg: msg,
-                content: msg.content
+                id: evtObj.id,
+                author: DiscordCore.userFactory(originClient, {id: evtObj.author?.id}),
+                channel: DiscordCore.channelFactory(originClient, {id: evtObj?.channel_id}),     //DMs are also "Channels"
+                rawUser: evtObj.author,
+                rawMsg: evtObj,
+                content: evtObj.content
             }
         }
+//debugger;
+        const newObj = {};
 
-        Object.assign( evtObj,
+        if (evtObj instanceof Message) {
+
+        };
+
+        if (evtObj.timestamp)
+            evtObj.time = new Date(evtObj.timestamp);
+
+        Object.assign( newObj,
             match( eName,
                 ChatEvent.events.JOIN_EVENT,        () => {user: {}},
                 ChatEvent.events.LEAVE_EVENT,       () => {user: {}},
@@ -203,10 +219,7 @@ module.exports = class DiscordCore extends ChatService {
             )
         );
 
-        if (evtObj.timestamp)
-            evtObj.time = new Date(evtObj.timestamp);
-
-        return new ChatEvent(eName, evtObj, originClient, originClient.client);
+        return new ChatEvent(eName, newObj, originClient);
     };
 
     static discordCmdFactory = (botMasterCmd) => {

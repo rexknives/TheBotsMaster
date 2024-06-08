@@ -2,7 +2,7 @@ const { setMetaData, getMetaData } = require('../services/state/metaDataMaps');
 
 module.exports = class ChatEvent extends Event {
 
-    constructor(type, evtObj, client, rawClient, ...args) {
+    constructor(type, evtObj, client, ...args) {
 
         super(type);
 
@@ -10,7 +10,7 @@ module.exports = class ChatEvent extends Event {
 
         this.chatbotEventType = type;
         this.client = client;
-        this.rawClient = rawClient;
+        this.rawClient = client.client;
     }
 
     reply = () => {}

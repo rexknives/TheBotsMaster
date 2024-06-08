@@ -3,10 +3,10 @@ module.exports = class Channel {
     constructor(users = [], opts) {
 
         this.id = null;
-        this.name = '';
+        this.name = opts.name;
         this.users = users;
         this.client = opts.client;
-        this.rawClient = opts.rawClient;
+        this.rawClient = opts.client.client;
         this.topic = '';
         this.users = [];
 
@@ -19,5 +19,7 @@ module.exports = class Channel {
 
     getUsers = () => {}
 
-    sendMsg = () => {}
+    sendMsg = (msg) => {
+        return this.client.sendMsg(this, msg);
+    }
 }

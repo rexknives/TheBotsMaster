@@ -1,22 +1,31 @@
+const { match } = require('matchacho');
+const { isEmpty } = require('lodash');
 const express = require('express');
 const Twilio = require('twilio');
-const { isEmpty } = require('lodash');
-const ChatService = require('../../../models/ChatService');
-const User = require('../../../models/User');
-const Channel = require('../../../models/Channel');
-const User = require('../../../models/User');
-const { match } = require('matchacho');
-const logger = require('../../../util/logger');
+const ChatService = require('../../../../models/ChatService');
+const ChatEvent = require('../../../../models/ChatEvent');
+const Channel = require('../../../../models/Channel');
+const User = require('../../../../models/User');
+const { setMetaData, getMetaData } = require('../../../state/metaDataMaps');
+const logger = require('../../../../util/logger');
 
 module.exports = class TwilioCore extends ChatService {
 
     constructor(opts, ...args) {
 
-        this.options = opts;
+        super(opts, ...args); 
+
+        const defaultOpts = {
+            canSpeak: true,
+            canReceiveSMS: true,
+            //phoneNumber: null
+        };
+
+        this.options = {...opts, ...defaultOpts};
         this.client = new Twilio(opts.accountSid, opts.authToken, {logLevel: 'debug'});
     }
 
-    _init = () => {
+    _initialize = () => {
 
         // Can always send sMS without needing a server if you don't care about replies
         if ( this.options.canReceiveSMS || this.options.canSpeak ) {
@@ -59,12 +68,13 @@ module.exports = class TwilioCore extends ChatService {
 
     logout = () => {}
 
+    // TODO: utilize Channel factory
     _checkP = (arg) => match(arg)
         .when(Channel,   arg)
         .when(User,      new Channel({phoneUsers: [arg]}))
         .when(Array,     new Channel({phoneUsers: arg}))
         .when(isEmpty,   new Error(''))
-        .default(Channel({phoneUsers: [arguments]}));
+        .default(new Channel({phoneUsers: [arg]}));
 
     join = (channelOrUserArrayOrUsers) => {
 
@@ -98,6 +108,7 @@ module.exports = class TwilioCore extends ChatService {
     sendAll = (chatEvent) => {}
 
     getSMSEndpointHandler = () => {
+
         return (req, res) => {
 
             const incomingMessage = req.body.Body;
@@ -175,9 +186,4 @@ module.exports = class TwilioCore extends ChatService {
             .update({voiceUrl, smsUrl})         // sms_fallback_url, voice_fallback_url
             .then((res) => logger.debug(`[ ${res.phoneNumber} webhook URL updated ]`))
             .catch(logger.error);
-}
-
-const exampleOpts = {
-    canSpeak: true,
-    canReceiveSMS: true
 }

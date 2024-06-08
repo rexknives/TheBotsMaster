@@ -11,11 +11,13 @@ module.exports = class ChatService extends EventEmitter {
 
     _initListeners = () => {}
 
+    // For pre-fetching data when wrapping libs that rely heavily on
+    // cache in inefficient ways
     _prepopulateData = () => {}
 
     // Account management
 
-    login = () => {}
+    login = () => {}                                        // public methods interacting w APIs should return promises & dispatch events
 
     logout = () => {}
 
@@ -33,11 +35,11 @@ module.exports = class ChatService extends EventEmitter {
 
     sendPrivMsg = (user, privMsg) => {}
 
-    sendAll = (chatEvent) => {}
+    sendAll = (chatEvent) => {}                             // for dispatching an event to the ALL feed
 
     // Moderation
 
-    kick = (isPermanent) => {}
+    kick = (isPermanent) => {}                              // kick/ban in one step
 
     // Voice
 
@@ -55,18 +57,20 @@ module.exports = class ChatService extends EventEmitter {
 
     // Event management
 
-    e = (factoryFunc, eName, evtObj, args) => {
+    e = (factoryFunc, eName, evtObj, args) => {             // generates a ChatEvent from the appropriate factory & dispatches it
         
         const aChatEvent = factoryFunc(this, eName, evtObj, args);
-        this.emit(ChatEvent.events.ALL_EVENT, aChatEvent); // fine, now that ChatEvent type is set
+        this.emit(ChatEvent.events.ALL_EVENT, aChatEvent);  // fine, now that ChatEvent type is set
         this.emit(eName, aChatEvent);
         return aChatEvent;
     }
 
-    on = (eventType, handlerFunc) => {
+    oldOn = this.on;
+    
+    on = (eventType, handlerFunc) => {                      // wrapping `on` and `off` to handle multiple Event types
 
         const events = eventType instanceof Array ? eventType : [eventType];
-        events.forEach((evt) => this.on?.(evt, handler));
+        events.forEach((evt) => this.oldOn?.(evt, handlerFunc));
     }
 
     off = (eventType, handlerFunc) => {
@@ -81,7 +85,7 @@ module.exports = class ChatService extends EventEmitter {
 
     static listEvents = () => {}
 
-    // Framework Factories
+    // Framework factories
 
     static channelFactory = (nativeAPIChannel) => {}    // returns our wrapped Channel instance
     

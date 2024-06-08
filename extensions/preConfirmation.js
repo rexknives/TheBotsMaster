@@ -1,17 +1,31 @@
-const CallStateMap = require('../services/state/CallStateMap');
+
 const { Events } = require('discord.js');
 const logger = require('../util/logger');
+const User = require('../models/User.js');
 const _ = require('lodash');
+
+const ChatEvent = require('../models/ChatEvent.js');
+
+const genApprovalText = (evt) => 
+    `${evt.client.bot.name} would like your permission to take the following action: \n`
+        + `sending "${evt.content}" \n`
+        + `"1" if yes \n`
+        + `"2" if no \n`;
 
 //TODO: pull core/client from approvalUser so that it's service agnostic
 //TODO: allow choice of regular or privMsg
-const genConfInst = (dc, approvalUser, yesCmp = (m) => m.startsWith('1'), noCmp = (m) => m.startsWith('2'), apprUserOtherParam = {}) => {
+const genConfInst = (dc,
+    approvalUser,
+    yesCmp = (m) => m.startsWith('1'),
+    noCmp = (m) => m.startsWith('2'),
+    inMsgTrap = (m) => m?.content?.toLowerCase?.().indexOf?.('trap me!') !== -1,
+    apprUserOtherParam = {}) => {
 
     return (inMsg, outMsg, next) => {
 
         // TODO: convert to service agnostic version, achieve cross-service confirmation
 
-        const olderImpl = (dc, approvalUser) => {
+        const discordImpl = (dc, approvalUser) => {
 
             const approvalText = 'Hello \n' +
                 'The Bot would like approval to send the following message:' +
@@ -37,42 +51,45 @@ const genConfInst = (dc, approvalUser, yesCmp = (m) => m.startsWith('1'), noCmp 
                 .finally( () => dc.removeListener(Events.MessageCreate, partialMsgProc) )
                 .catch( logger.error );
 
-            next(outMsg, 'some other dispatched work or state here?');
+            next(outMsg);
         }
 
-        olderImpl(dc, approvalUser);
+        //discordImpl(dc, approvalUser);
         
-        const agnosticImpl = (dc, approvalUser, yesCmp, noCmp, apprUserOtherParam ) => {
+        const agnosticImpl = (apprUserOrChan, yesCmp, noCmp, inMsgTrap, apprUserOtherParam ) => {
 
-            const eventType = isChannel ? ChatEvent.events.MSG_EVENT : ChatEvent.events.PRIV_MSG_EVENT;
+            if (inMsgTrap && !inMsgTrap(inMsg))
+                return next(inMsg);
 
+            let apprChan, apprUser;
             if (apprUserOrChan instanceof User) {
-                const apprChan =  apprUserOrChan.privChannel;
-                const apprUser = apprUserOrChan;
+                apprChan =  apprUserOrChan.privChannel;
+                apprUser = apprUserOrChan;
             } else {
-                const apprChan =  apprUserOrChan;
-                const apprUser = apprUserOtherParam;
+                apprChan =  apprUserOrChan;
+                apprUser = apprUserOtherParam;
             }
         
-            const msgEvents = [ChatEvent.events.MSG_EVENT, ChatEvent.events.PRIV_MSG_EVENT];
+            const msgEvents = [ ChatEvent.events.MSG_EVENT, ChatEvent.events.PRIV_MSG_EVENT ];
             let apprMsgHandlerFunc;
 
             const apprCompare = (msg, s, r) => {
                 if (msg.author.id !== apprUser.id) return;
-                if (yesCmp(msg)) s();
-                if (noCmp(msg)) r();
+                if (yesCmp(msg.content)) s();
+                if (noCmp(msg.content)) r();
             }
 
-            apprChan.sendMsg(approvalText)
+            apprChan.sendMsg(genApprovalText(inMsg))
                 .then( () => new Promise((rs, rj) => {
                     apprMsgHandlerFunc = _.partial(apprCompare, _, rs, rj);
-                    dcs.on(msgEvents, apprMsgHandlerFunc)) )
+                    apprUser.client.on(msgEvents, apprMsgHandlerFunc)
+                }))
                 .then( () => { next(inMsg) } )
-                .finally( () => { dcs.off(msgEvents, apprMsgHandlerFunc); } );
+                .finally( () => apprUser.client.off(msgEvents, apprMsgHandlerFunc) );
         }
 
-        //agnosticImpl(dc, approvalUser, yesCmp, noCmp, apprUserOtherParam )
+        agnosticImpl(approvalUser, yesCmp, noCmp, inMsgTrap, apprUserOtherParam )
     }
 }
 
-module.exports = { genConfInst, promiseTest };
+module.exports = { genConfInst };
