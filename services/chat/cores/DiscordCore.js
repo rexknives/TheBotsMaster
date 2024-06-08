@@ -17,7 +17,10 @@ module.exports = class DiscordCore extends ChatService {
         super(opts);
 
         const defaultOpts = {
-            omniChannel: true
+            omniChannel: true,
+            preFetchMetadata: true,                                      // Discord.js' implementation of cache is notoriously annoying
+            echoGuildJoins: true,                                        // Whether GUILD_MEMBER_JOIN dispatches JOIN event
+            echoDMJoins: true
         }
 
         this.options = {...defaultOpts, ...opts};
@@ -25,28 +28,48 @@ module.exports = class DiscordCore extends ChatService {
         this.currentChannelHandler = null;
         this.currentChannel = null;
 
-        this.bot = {name: 'testbot'};
+        this.bot = { name: 'testbot' }; // TEMP!
     }
 
     _initialize = () => {
 
         this.client.on(Events.MessageCreate, (msg, ...args) => {
 
-            if (!this?.options?.omniChannel) {
-                if (!this.currentChannel)
-                    return;
+            if (!this?.options?.omniChannel) {                          // Discord apps receive all messages from all Channels at all times.
+                if (!this.currentChannel)                               // We use the join and leave methods to simulate single-Channel functionality
+                    return;                                             // when omniChannel is false
                 else if (msg.channel.id !== this.currentChannel.id)
                     return;
             }
             
+            // On Discord, private DMs exist outside of guilds/'servers'; check this to determine
             const type = msg.guild ? ChatEvent.events.MSG_EVENT : ChatEvent.events.PRIV_MSG_EVENT;
             this.e(type, msg, args);
         });
+
+        if ( this.options.echoGuildJoins ) {
+            this.client.on( Events.GuildMemberAdd, (...args) => this.e( ChatEvent.events.JOIN_EVENT, {}, args ) )
+                       .on( Events.GuildMemberRemove, (...args) => this.e( ChatEvent.events.LEAVE_EVENT, {}, args ) );
+        }
+
+        if ( this.options.echoDMJoins ) {
+            this.client.on( 'recipientAdd', (...args) => this.e( ChatEvent.events.JOIN_EVENT, {}, args ) )
+                       .on( 'recipientRemove', (...args) => this.e( ChatEvent.events.LEAVE_EVENT, {}, args ) );
+        }
+
+        if (this.options.preFetchMetadata)
+            this._prefetch();
 
         //TODO: should I simulate joins and leaves with presence data? leaves when user uses diff #channel?
             // GUILD_MEMBER_JOIN: A message sent when a new member joins a server.
             // RECIPIENT_ADD: A message sent when a user is added to a group DM.
             // RECIPIENT_REMOVE: A message sent when a user is removed from a group DM.
+    }
+
+    _prefetch = () => {
+        return this.listChannels()
+            .then((chansResp) => { /* process Channels data */ })
+            .catch((err) => {});
     }
 
     login = (otherToken) => {
@@ -58,6 +81,7 @@ module.exports = class DiscordCore extends ChatService {
         return this.client.login(theToken)
             .then((maybeErrText) => {
                 if (maybeErrText === theToken) {
+                    this._initialize();
                     return this.e( ChatEvent.events.LOGIN_EVENT, {client: this, rawClient: this.client} );
                 } else {
                     throw new Error();
@@ -139,14 +163,18 @@ module.exports = class DiscordCore extends ChatService {
             .catch( logger.error );
     }
 
+    kick = (wrappedUser, time) => {
+
+        if (time === Infinity)
+            return wrappedUser.rawUser.ban();
+
+        return wrappedUser.rawUser.kick();
+    }
+
     //TODO: should Synthetic Events and raw Events come from the same EventEmitter?
     //TODO: should "self" generated messages be behind a boolean config?
 
     e = this.e.bind(this, DiscordCore.eventFactory);
-
-    //on = (...args) => this.client?.on(...args);
-
-    //once = (...args) => this.client?.once(...args);
 
     onceFilter = (...args) => ChatEvent.onceFilter(this, ...args);   //TODO: change to -this-
 
@@ -198,8 +226,8 @@ module.exports = class DiscordCore extends ChatService {
                 content: evtObj.content
             }
         }
-//debugger;
-        const newObj = {};
+
+        const newObj = { serviceType: 'discord'};
 
         if (evtObj instanceof Message) {
 
@@ -232,9 +260,7 @@ module.exports = class DiscordCore extends ChatService {
 
     static listChannels = (clientCore) => {
         const rest = new REST({ version: '9' }).setToken(clientCore.options.token);
-        
-        // TODO: FIX GUILD ID REFERENCE!
-        return rest.get( Routes.guildChannels( [...clientCore.client.guilds.cache.keys()][0]) )
+        return rest.get( Routes.guildChannels( [...clientCore.client.guilds.cache.keys()][0]) )      // TODO: FIX GUILD ID REFERENCE!
             .then((resChans) => {
                 const wrappedChans = resChans.map((dcChan) => DiscordCore.channelFactory(clientCore, dcChan));
                 this.e(ChatEvent.events.LIST_CHANNELS, {channels: wrappedChans, client: clientCore, rawClient: clientCore.client});
@@ -242,4 +268,31 @@ module.exports = class DiscordCore extends ChatService {
             })
             .catch( logger.error );
     }
+
+    static listUsers = (guildId) => {
+
+        let members = [];
+        const query = { limit: 1000, after: null };
+
+        const processMembers = (fetchedMembers) => {
+
+            members = members.concat(fetchedMembers);
+
+            if (fetchedMembers.length >= 1000) {
+                query.after = fetchedMembers[fetchedMembers.length - 1].user.id;
+                return rest.get(Routes.guildMembers( [...clientCore.client.guilds.cache.keys()][0] ), { query })
+                    .then(processMembers);
+            }
+        };
+
+        return rest.get( Routes.guildMembers(guildId), { query } )
+            .then(processMembers)
+            .then( () => new Promise((s) => s(members)) )
+            .catch((error) => {
+                console.error('Error fetching members:', error);
+                fetchMore = false;
+            });
+    }
+
+    static SERVICE_TYPE = 'discord';
 }
