@@ -1,0 +1,36 @@
+# Todo:
+
+- [ ] pick a templating engine
+- [ ] implement sendAll for all 3 chat service cores
+- [ ] API for voice/audio handling
+- [ ] filepath mapper for loading js
+- [ ] Events
+    - [x] automatically set up msg and privMsg event listeners to dispatch "synthetic" Events
+    - [ ] give "synthetic" Events reply methods
+    - [ ] wire msgs into Middleware stack after event listeners
+- [ ] Polyfills
+    - [ ] Reply & Threading subsytems & polyfills
+    - [ ] media attachment subsystem & polyfill
+    - [ ] Voice & video chat polyfill
+    - [ ] Normalize Role mgmt subsystem
+    - [ ] Normalize Sharding subsystem & API
+- [ ] caches
+    - [ ] users
+    - [ ] channels
+- [ ] Chat Services
+    - [ ] Signal
+    - [ ] Telegram
+    - [ ] WhatsApp
+    - [ ] Mastodon
+    - [ ] XMPP
+    - [ ] Slack
+    - [ ] Facebook Messenger
+    - [ ] Youtube live
+    - [ ] Google hangouts
+    - [ ] maybe
+        - [ ] SMS
+        - [ ] WeChat
+        - [ ] HipChat
+        - [ ] Snapchat
+- [ ] future roadmap
+    - [ ] Bot Sharding
