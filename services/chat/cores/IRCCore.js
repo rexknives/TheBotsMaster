@@ -12,22 +12,24 @@ module.exports = class IRCCore extends ChatService {
         super(opts, ...args);
         this.options = opts;
         this.client = new irc.Client(opts.server, opts.nick, opts);
+
+        this.client.on = this.client.addListener;
+        this.client.off = this.client.removeListener;
     }
 
     _initialize = () => {
     
-        this.client.addListener('message', (from, to, msg) => {
-            logger.log(from + ' => ' + to + ': ' + msg);
-            this.e(ChatEvent.events.MSG_EVENT, {from, to, msg});
-        });
-        
-        this.client.addListener('pm', (from, msg) => {
-            logger.log(from + ' => ME: ' + msg);
-            this.e(ChatEvent.events.PRIV_MSG_EVENT, {from, msg});
-        });
+        this.client.on('message', (from, to, msg) => this.e(ChatEvent.events.MSG_EVENT, {from, to, msg}));
+        this.client.on('pm', (from, msg) => this.e(ChatEvent.events.PRIV_MSG_EVENT, {from, msg}));
+        this.client.on('join', (channel, user) => this.e(ChatEvent.events.PRIV_MSG_EVENT, {channel, user}));
+        this.client.on('leave', (channel, user, why) => this.e(ChatEvent.events.PRIV_MSG_EVENT, {channel, user, why}));
+        this.client.on('error', (error) => this.e(ChatEvent.events.ERROR, {error}));
     }
 
-    login = () => this.client.connect();
+    login = () => {
+        this.client.connect();
+        this._initialize();
+    }
 
     logout = () => {
 
@@ -61,7 +63,7 @@ module.exports = class IRCCore extends ChatService {
 
     e = this.e.bind(this, IRCCore.eventFactory);
 
-    getWaterhoseFeed = (eventProcessor, off = false, events = IRCCore.listEvents()) => {
+    getWaterhoseFeed = (eventProcessor, off = false, events = IRCCore.ALL_EVENTS) => {
         events.forEach((evt)=>{
             logger.debug(`adding ${evt} to waterhose event listener.`);
             this.client[off ? 'removeListener' : 'on'](evt, eventProcessor);
@@ -95,7 +97,9 @@ module.exports = class IRCCore extends ChatService {
         return new ChatEvent(type, newObj, client);
     }
 
-    static listEvents = () => [
+    static SERVICE_TYPE = 'irc';
+
+    static ALL_EVENTS = [
         'registered', 'notice', 'mode_is', '+mode', '-mode', 'nick', 'motd', 'action',
         'ctcp', 'raw', 'kick', 'names', 'topic', 'channellist', 'channellist_start',
         'channellist_item', 'whois', 'selfMessage', 'kill', 'message', 'pm', 'invite',
